@@ -3,6 +3,13 @@ import { Request, Response } from "express";
 
 const prisma = new PrismaClient();
 
+
+function addMinutes(date: Date, minutes: number): Date {
+  const result = new Date(date);
+  result.setMinutes(result.getMinutes() + minutes);
+  return result;
+}
+
 /// orden para cliente ocasional (vista admin)
 export const crearOrdenClienteOcasional = async (
   req: Request,
@@ -132,12 +139,6 @@ export const crearOrdenClienteOcasional = async (
     res.status(500).json({ error: "Error interno del servidor" });
   }
 };
-
-function addMinutes(date: Date, minutes: number): Date {
-  const result = new Date(date);
-  result.setMinutes(result.getMinutes() + minutes);
-  return result;
-}
 
 // orden para cliente registrado (vista admin)
 export const crearOrdenClienteRegistrado = async (

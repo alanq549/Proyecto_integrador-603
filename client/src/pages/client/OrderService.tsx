@@ -161,22 +161,33 @@ const OrderService = () => {
     fetchVehicles();
   }, [userId]);
 
-  function getCDMXISOString(date: Date): string {
-    const formatter = new Intl.DateTimeFormat("sv-SE", {
-      timeZone: "America/Mexico_City",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    });
+function getCDMXISOString(date: Date): string {
+  const formatter = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "America/Mexico_City",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
 
-    const formatted = formatter.format(date); // "2025-06-01 11:19:00"
-    const [fecha, hora] = formatted.split(" ");
-    return `${fecha}T${hora}`;
-  }
+  const parts = formatter.formatToParts(date);
+  const get = (type: string) => parts.find(p => p.type === type)?.value;
+
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}:${get("second")}`;
+}
+
+
+
+  console.log("Payload enviado:", {
+  idUsuario: userId,
+  idVehiculo: selectedVehicle,
+  idServicios: selectedServices,
+  fechaInicio: getCDMXISOString(fechaReserva),
+  notas: notas || "Sin observaciones",
+});
 
   const handleReservation = async () => {
     if (!selectedVehicle) {
@@ -212,6 +223,8 @@ const OrderService = () => {
       return;
     }
 
+    
+
     setLoading((prev) => ({ ...prev, reserva: true }));
 
     try {
@@ -225,7 +238,7 @@ const OrderService = () => {
           idUsuario: userId,
           idVehiculo: selectedVehicle,
           idServicios: selectedServices,
-          fechaInicio: getCDMXISOString(fechaReserva),
+          fechaInicio: formatFecha(fechaReserva),
           notas: notas || "Sin observaciones",
         }),
       });
