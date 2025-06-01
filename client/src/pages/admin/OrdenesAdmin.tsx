@@ -171,6 +171,13 @@ const OrdenesAdmin = () => {
     setMostrarNuevoVehiculo(false);
   };
 
+  const getFechaCDMX_ISO = () => {
+    const localStr = new Date().toLocaleString("en-US", {
+      timeZone: "America/Mexico_City",
+    });
+    return new Date(localStr).toISOString();
+  };
+
   // Función para enviar el formulario
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -226,7 +233,7 @@ const OrdenesAdmin = () => {
         modelo,
         color,
         idServicios,
-        fechaInicio: new Date().toISOString(),
+        fechaInicio: getFechaCDMX_ISO(),
         notas,
         metodoPago: metodoPago || "efectivo",
       };
@@ -1357,7 +1364,7 @@ const OrdenesAdmin = () => {
                         className="px-2 py-1 text-gray-600 dark:text-gray-300 truncate max-w-[150px]"
                         title={orden.servicio || "-"}
                       >
-                          <div className="flex flex-col space-y-1">
+                        <div className="flex flex-col space-y-1">
                           {orden.servicio
                             ? orden.servicio
                                 .split(", ")

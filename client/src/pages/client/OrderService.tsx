@@ -161,6 +161,23 @@ const OrderService = () => {
     fetchVehicles();
   }, [userId]);
 
+  function getCDMXISOString(date: Date): string {
+    const formatter = new Intl.DateTimeFormat("sv-SE", {
+      timeZone: "America/Mexico_City",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+
+    const formatted = formatter.format(date); // "2025-06-01 11:19:00"
+    const [fecha, hora] = formatted.split(" ");
+    return `${fecha}T${hora}`;
+  }
+
   const handleReservation = async () => {
     if (!selectedVehicle) {
       toast.error("Por favor selecciona un vehículo");
@@ -208,7 +225,7 @@ const OrderService = () => {
           idUsuario: userId,
           idVehiculo: selectedVehicle,
           idServicios: selectedServices,
-          fechaInicio: fechaReserva.toLocaleString("sv-SE").replace(" ", "T"), // "YYYY-MM-DDTHH:mm"
+          fechaInicio: getCDMXISOString(fechaReserva),
           notas: notas || "Sin observaciones",
         }),
       });
