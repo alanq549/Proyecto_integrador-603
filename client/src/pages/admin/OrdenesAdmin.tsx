@@ -254,6 +254,7 @@ const OrdenesAdmin = () => {
       }
 
       console.log("Payload a enviar:", JSON.stringify(payload, null, 2));
+console.log("Fecha local CDMX ISO a enviar:", payload.fechaInicio);
 
       // Enviar la solicitud
       const res = await fetch(endpoint, {
