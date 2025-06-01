@@ -161,25 +161,15 @@ const OrderService = () => {
     fetchVehicles();
   }, [userId]);
 
-function getCDMXISOString(date: Date): string {
-  const formatter = new Intl.DateTimeFormat("sv-SE", {
-    timeZone: "America/Mexico_City",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
+function getCDMXISOStringWithOffset(date: Date): string {
+  const tzoffset = -date.getTimezoneOffset(); // en minutos
+  const diff = tzoffset >= 0 ? "+" : "-";
+  const pad = (n: number) => String(Math.floor(Math.abs(n))).padStart(2, "0");
+  const hours = pad(tzoffset / 60);
+  const minutes = pad(tzoffset % 60);
 
-  const parts = formatter.formatToParts(date);
-  const get = (type: string) => parts.find(p => p.type === type)?.value;
-
-  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}:${get("second")}`;
+  return date.toISOString().replace('Z', `${diff}${hours}:${minutes}`);
 }
-
-
 
   console.log("Payload enviado:", {
   idUsuario: userId,
@@ -238,7 +228,7 @@ function getCDMXISOString(date: Date): string {
           idUsuario: userId,
           idVehiculo: selectedVehicle,
           idServicios: selectedServices,
-          fechaInicio: getCDMXISOString(fechaReserva),
+          fechaInicio: getCDMXISOStringWithOffset(fechaReserva),
           notas: notas || "Sin observaciones",
         }),
       });
