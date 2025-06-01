@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import TicketModal from "../../components/common/TicketModal";
-import { useTheme } from '../../components/common/ThemeContext'; // ajuste según tu estructura
+import { useTheme } from "../../components/common/ThemeContext"; // ajuste según tu estructura
 
 import {
   FaCar,
@@ -17,7 +17,7 @@ import {
   FaTag,
   FaCalendarAlt,
 } from "react-icons/fa";
-
+import { Link } from "react-router-dom";
 type Servicio = {
   id_servicio: number;
   nombre: string;
@@ -179,6 +179,22 @@ const OrderService = () => {
       return;
     }
 
+    const now = new Date();
+    const diffMs = fechaReserva.getTime() - now.getTime();
+    const hour = fechaReserva.getHours();
+
+    // ⛔ Evitar reservas con menos de 5 minutos
+    if (diffMs < 5 * 60 * 1000) {
+      toast.error("Debes reservar con al menos 5 minutos de anticipación.");
+      return;
+    }
+
+    // ⛔ Verificar rango de horario permitido
+    if (hour < 8 || hour >= 20) {
+      toast.error("Solo puedes reservar entre las 08:00 y 20:00 hrs.");
+      return;
+    }
+
     setLoading((prev) => ({ ...prev, reserva: true }));
 
     try {
@@ -192,7 +208,7 @@ const OrderService = () => {
           idUsuario: userId,
           idVehiculo: selectedVehicle,
           idServicios: selectedServices,
-          fechaInicio: fechaReserva.toISOString(),
+          fechaInicio: fechaReserva.toLocaleString("sv-SE").replace(" ", "T"), // "YYYY-MM-DDTHH:mm"
           notas: notas || "Sin observaciones",
         }),
       });
@@ -229,14 +245,16 @@ const OrderService = () => {
           (total, s) => total + Number(s.precio),
           0
         ),
-        fecha: fechaReserva.toISOString(),
+        fecha: formatFecha(fechaReserva),
         estado: "pendiente",
         notas: notas || "Ninguna",
       });
 
       setTicketVisible(true);
       toast.dismiss(); // opcional, limpia anteriores
-toast.success(`¡Gracias por tu reserva! 🚗 Tu ${vehiculo?.marca} ${vehiculo?.modelo} ha sido agendado con éxito. Pronto nos veremos.`);
+      toast.success(
+        `¡Gracias por tu reserva! 🚗 Tu ${vehiculo?.marca} ${vehiculo?.modelo} ha sido agendado con éxito. Pronto nos veremos.`
+      );
 
       // Resetear selección después de reservar
       setSelectedServices([]);
@@ -249,6 +267,38 @@ toast.success(`¡Gracias por tu reserva! 🚗 Tu ${vehiculo?.marca} ${vehiculo?.
       }
     } finally {
       setLoading((prev) => ({ ...prev, reserva: false }));
+    }
+  };
+
+  const formatFecha = (dateInput: string | Date) => {
+    if (!dateInput) return "--/--/---- --:--";
+
+    try {
+      const fecha =
+        typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+
+      if (isNaN(fecha.getTime())) {
+        console.warn("Fecha inválida:", dateInput);
+        return "--/--/---- --:--";
+      }
+
+      return fecha.toLocaleString("es-MX", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: "America/Mexico_City", // 🧠 Aquí está la magia
+      });
+    } catch (error) {
+      console.error(
+        "Error formateando fecha/hora:",
+        error,
+        "Valor recibido:",
+        dateInput
+      );
+      return "--/--/---- --:--";
     }
   };
 
@@ -275,9 +325,21 @@ toast.success(`¡Gracias por tu reserva! 🚗 Tu ${vehiculo?.marca} ${vehiculo?.
   };
 
   const formatLocalDatetime = (date: Date) => {
-    const offset = date.getTimezoneOffset();
-    const local = new Date(date.getTime() - offset * 60 * 1000);
-    return local.toISOString().slice(0, 16);
+    const pad = (n: number) => String(n).padStart(2, "0");
+
+    const yyyy = date.getFullYear();
+    const MM = pad(date.getMonth() + 1);
+    const dd = pad(date.getDate());
+    const hh = pad(date.getHours());
+    const mm = pad(date.getMinutes());
+
+    return `${yyyy}-${MM}-${dd}T${hh}:${mm}`;
+  };
+
+  const getMinFechaReserva = () => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 5);
+    return formatLocalDatetime(now);
   };
 
   const totalPrice = servicios
@@ -294,18 +356,16 @@ toast.success(`¡Gracias por tu reserva! 🚗 Tu ${vehiculo?.marca} ${vehiculo?.
     return translations[key] || key;
   }
 
-          const { darkMode } = useTheme();
-  
+  const { darkMode } = useTheme();
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 dark:bg-gray-900">
-
       <ToastContainer
-  position="top-right"
-  autoClose={2000}
-  theme={darkMode ? 'dark' : 'light'}
-  toastClassName="rounded-md shadow-lg"
-/>
+        position="top-right"
+        autoClose={2000}
+        theme={darkMode ? "dark" : "light"}
+        toastClassName="rounded-md shadow-lg"
+      />
       <div className="max-w-6xl mx-auto">
         {/* Encabezado */}
         <div className="flex justify-between items-center mb-8">
@@ -316,7 +376,14 @@ toast.success(`¡Gracias por tu reserva! 🚗 Tu ${vehiculo?.marca} ${vehiculo?.
           {!isProfileComplete && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-md flex items-center">
               <FaInfoCircle className="mr-2" />
-              Completa tu perfil en la sección "Mi perfil" para reservar
+              <p className="pr-2">Completa tu perfil en la sección</p>{" "}
+              <Link
+                to="/client/perfil"
+                className="underline font-medium hover:text-red-900"
+              >
+                Mi perfil
+              </Link>{" "}
+              <p className="pl-2">para reservar</p>
             </div>
           )}
         </div>
@@ -429,8 +496,30 @@ toast.success(`¡Gracias por tu reserva! 🚗 Tu ${vehiculo?.marca} ${vehiculo?.
                 <input
                   type="datetime-local"
                   value={formatLocalDatetime(fechaReserva)}
-                  onChange={(e) => setFechaReserva(new Date(e.target.value))}
-                  min={formatLocalDatetime(new Date())}
+                  onChange={(e) => {
+                    const selected = new Date(e.target.value);
+                    const hour = selected.getHours();
+
+                    if (hour < 8 || hour >= 20) {
+                      toast.error(
+                        "El horario permitido es de 08:00 a 20:00 hrs"
+                      );
+                      return;
+                    }
+
+                    const ahora = new Date();
+                    const diffMs = selected.getTime() - ahora.getTime();
+
+                    if (diffMs < 5 * 60 * 1000) {
+                      toast.error(
+                        "Debes reservar al menos con 5 minutos de anticipación"
+                      );
+                      return;
+                    }
+
+                    setFechaReserva(selected);
+                  }}
+                  min={getMinFechaReserva()}
                   className="w-full p-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600"
                 />
               </div>
@@ -767,7 +856,11 @@ toast.success(`¡Gracias por tu reserva! 🚗 Tu ${vehiculo?.marca} ${vehiculo?.
                       !selectedVehicle ||
                       loading.reserva ||
                       !userId ||
-                      !isProfileComplete
+                      !isProfileComplete ||
+                      fechaReserva.getHours() < 8 ||
+                      fechaReserva.getHours() >= 20 ||
+                      fechaReserva.getTime() - new Date().getTime() <
+                        5 * 60 * 1000
                     }
                     className={`px-8 py-3 rounded-xl font-semibold text-lg transition-all flex items-center gap-3 ${
                       !selectedVehicle || !userId || !isProfileComplete

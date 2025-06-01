@@ -93,8 +93,6 @@ export const resumen = async (req: Request, res: Response) => {
   }
 };
 
-
-
 // Ingresos agrupados por día, semana o mes según parámetro
 export const ingresos = async (req: Request, res: Response) => {
   try {
@@ -138,26 +136,30 @@ export const ingresos = async (req: Request, res: Response) => {
   }
 };
 
-
 // Distribución de uso por servicio
 export const serviciosDistribucion = async (req: Request, res: Response) => {
   try {
-    // Agrupamos en ordenes_servicios por id_servicio y contamos
+    // Agrupamos por id_servicio y contamos solo si la orden relacionada no está cancelada
     const servicios = await prisma.ordenes_servicios.groupBy({
       by: ["id_servicio"],
+      where: {
+        ordenes: {
+          estado: { not: "cancelado" },
+        },
+      },
       _count: {
         id_servicio: true,
       },
     });
 
-    // Traemos los nombres para esos id_servicio
+    // Traemos los nombres de los servicios
     const nombres = await prisma.servicios.findMany({
       where: {
         id_servicio: { in: servicios.map((s: any) => s.id_servicio) },
       },
     });
 
-    // Formateamos resultado para gráfica u otro uso
+    // Formateamos para salida
     const data = servicios.map((s: any) => {
       const nombre = nombres.find((n: any) => n.id_servicio === s.id_servicio)?.nombre || "Desconocido";
       return { name: nombre, value: s._count.id_servicio };
@@ -170,31 +172,42 @@ export const serviciosDistribucion = async (req: Request, res: Response) => {
   }
 };
 
+
 // Tipo de clientes registrados vs ocasionales
 export const clientesTipo = async (req: Request, res: Response) => {
   try {
-    const vehiculos = await prisma.ordenes.groupBy({
-      by: ["id_vehiculo"],
-      _count: true,
+    // Traer solo usuarios con rol "cliente"
+    const usuarios = await prisma.usuarios.findMany({
+      where: {
+        rol: "cliente",
+      },
+      select: {
+        email: true,
+      },
     });
 
     let registrados = 0;
     let ocasionales = 0;
 
-    vehiculos.forEach((v: any) => {
-      if (v._count > 1) registrados++;
-      else ocasionales++;
+    usuarios.forEach((usuario) => {
+      if (usuario.email && usuario.email.endsWith("@ocasional.local")) {
+        ocasionales++;
+      } else {
+        registrados++;
+      }
     });
 
     res.json([
       { name: "Registrados", value: registrados },
       { name: "Ocasionales", value: ocasionales },
     ]);
-  } catch (error:any) {
-    console.error("[ERROR] clientesTipo:", error.code);
+  } catch (error: any) {
+    console.error("[ERROR] clientesTipo:", error);
     res.status(500).json({ message: "Error al obtener tipos de clientes" });
   }
 };
+
+
 ///Últimas órdenes 
 export const getUltimasOrdenes = async (req: Request, res: Response) => {
   try {

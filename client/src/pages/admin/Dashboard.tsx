@@ -60,12 +60,13 @@ useEffect(() => {
 
 
   // Acciones rápidas
-  const quickActions = [
-    { icon: '📝', title: 'Nueva Orden', link: '/admin/Order' },
-    { icon: '👤', title: 'Agregar Cliente', link: '/admin/Order' },
-    { icon: '🚗', title: 'Registrar Vehículo', link: '/admin/Order' },
-    { icon: '🔧', title: 'Agregar Servicio', link: '/admin/servicios' }
-  ];
+const quickActions = [
+  { icon: '➕', title: 'Nueva Orden', link: '/admin/Order' },         // Acción directa
+  { icon: '📊', title: 'Reporte', link: '/admin/Informes' },         // Visual y claro para informes
+  { icon: '📜', title: 'Historial', link: '/admin/HistorialOrdenes' }, // Representa registros históricos
+  { icon: '🔧', title: 'Agregar Servicio', link: '/admin/servicios' }  // Clásico para ajustes o herramientas
+];
+
 
   return (
     <div className="admin-content">
@@ -113,7 +114,7 @@ useEffect(() => {
               <div>
                 <h3>Servicios activos</h3>
                 <p className="widget-value">{stats.activeServices}</p>
-                <Link to="/admin/Order" className="widget-link">
+                <Link to="/admin/servicios" className="widget-link">
                   Ver detalles →
                 </Link>
               </div>

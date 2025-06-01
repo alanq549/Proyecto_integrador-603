@@ -102,22 +102,25 @@ const userId = storedUser.id;
         {/* Esta parte se mantiene igual, el mt-auto hará su magia */}
         <div className="user-section">
           <div
-            className="user-profile flex items-center p-3 cursor-pointer hover:bg-gray-700 rounded"
-            onClick={() => setShowUserMenu(!showUserMenu)}
-          >
-            {rol === "admin" ? (
-              <FaUserShield className="text-white mr-4" />
-            ) : (
-              <FaUser className="text-white mr-4" />
-            )}
-            {user ? (
-              <span className="text-white">
-                {user.nombre} {user.apellido_materno ?? ""}
-              </span>
-            ) : (
-              <span className="text-white">Cargando...</span>
-            )}
-          </div>
+  className="user-profile flex items-center p-3 cursor-pointer hover:bg-gray-700 rounded"
+  onClick={() => setShowUserMenu(!showUserMenu)}
+>
+  {rol === "admin" ? (
+    <FaUserShield className="text-white mr-4" />
+  ) : (
+    <FaUser className="text-white mr-4" />
+  )}
+  {user ? (
+    <span className="text-white">
+      {user.nombre && user.apellido_materno
+        ? `${user.nombre} ${user.apellido_materno}`
+        : "Completa tu perfil"}
+    </span>
+  ) : (
+    <span className="text-white">Cargando...</span>
+  )}
+</div>
+
           {/* aqui es donde va a estar lo de la api, ya lo demas funciona como debe pero el detalle es que cmo es uno compartido aqui nesesito ver que use se logeo y obtener sus datos*/}
           {/* Menú de Usuario (modal) */}
           {showUserMenu && (

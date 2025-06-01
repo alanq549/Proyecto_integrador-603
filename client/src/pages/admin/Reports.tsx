@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
-import { useTheme } from '../../components/common/ThemeContext'; // ajuste según tu estructura
+import { useTheme } from "../../components/common/ThemeContext"; // ajuste según tu estructura
 import {
   BarChart,
   Bar,
@@ -18,33 +18,30 @@ import {
 } from "recharts";
 
 const Reports = () => {
-      const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<"week" | "month" | "year">("week");
 
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
-const fetchResumen = async () => {
-  const res = await fetch(`${API_URL}/reportes/resumen?range=${timeRange}`);
-  if (!res.ok) throw new Error("Error al cargar resumen");
-  const data = await res.json();
-  console.log("Resumen:", data);
-  return data;
-};
+  const fetchResumen = async () => {
+    const res = await fetch(`${API_URL}/reportes/resumen?range=${timeRange}`);
+    if (!res.ok) throw new Error("Error al cargar resumen");
+    const data = await res.json();
+    console.log("Resumen:", data);
+    return data;
+  };
 
-const fetchIngresos = async (range: "week" | "month" | "year") => {
-  const res = await fetch(`${API_URL}/reportes/ingresos?range=${range}`);
-  const data = await res.json();
-  console.log("Ingresos:", data); // Este es el que te interesa
-  return data;
-};
-
+  const fetchIngresos = async (range: "week" | "month" | "year") => {
+    const res = await fetch(`${API_URL}/reportes/ingresos?range=${range}`);
+    const data = await res.json();
+    console.log("Ingresos:", data); // Este es el que te interesa
+    return data;
+  };
 
   const fetchServicios = async () => {
-    const res = await fetch(
-      `${API_URL}/reportes/servicios-distribucion`
-    );
+    const res = await fetch(`${API_URL}/reportes/servicios-distribucion`);
 
     return res.json();
   };
@@ -64,30 +61,28 @@ const fetchIngresos = async (range: "week" | "month" | "year") => {
   }
 
   const formatDate = (dateString: string) => {
-  const formatted = new Date(dateString);
-  const options: Intl.DateTimeFormatOptions = {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "America/Mexico_City", // 🔥 México fijo, sin depender del navegador
-  };
+    const formatted = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: "America/Mexico_City", // 🔥 México fijo, sin depender del navegador
+    };
 
-  return formatted.toLocaleString("es-MX", options);
-};
+    return formatted.toLocaleString("es-MX", options);
+  };
 
   const [ultimasOrdenes, setUltimasOrdenes] = useState<UltimaOrden[]>([]);
 
   const fetchUltimasOrdenes = async () => {
-    const res = await fetch(
-      `${API_URL}/reportes/ultimas-ordenes`
-    );
+    const res = await fetch(`${API_URL}/reportes/ultimas-ordenes`);
     if (!res.ok) throw new Error("Error al cargar últimas órdenes");
     const json = await res.json();
 
-    console.log('ultmas ordenes',json.data)
+    console.log("ultmas ordenes", json.data);
     // Asumo que json.data tiene la lista de órdenes con la estructura que definiste en backend
     setUltimasOrdenes(json.data);
   };
@@ -178,8 +173,7 @@ const fetchIngresos = async (range: "week" | "month" | "year") => {
     loadData();
   }, [timeRange]);
 
-      const { darkMode } = useTheme();
-  
+  const { darkMode } = useTheme();
 
   return (
     <div className="admin-content p-6">
@@ -187,12 +181,12 @@ const fetchIngresos = async (range: "week" | "month" | "year") => {
         <h1 className="content-title text-2xl font-bold">
           Reportes y Estadísticas
         </h1>
-<ToastContainer
-  position="top-right"
-  autoClose={1500}
-  theme={darkMode ? 'dark' : 'light'}
-  toastClassName="rounded-md shadow-lg"
-/>
+        <ToastContainer
+          position="top-right"
+          autoClose={1500}
+          theme={darkMode ? "dark" : "light"}
+          toastClassName="rounded-md shadow-lg"
+        />
         <div className="flex space-x-2">
           <button
             onClick={() => setTimeRange("week")}
@@ -547,7 +541,15 @@ const fetchIngresos = async (range: "week" | "month" | "year") => {
                         {orden.cliente}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                        {orden.servicio}
+                        <div className="flex flex-col space-y-1">
+                          {orden.servicio
+                            ? orden.servicio
+                                .split(", ")
+                                .map((servicio, index) => (
+                                  <div key={index}>{servicio.trim()}</div>
+                                ))
+                            : "Servicio no disponible"}
+                        </div>{" "}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                         {formatDate(orden.fecha)}

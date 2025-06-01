@@ -1326,7 +1326,7 @@ const OrdenesAdmin = () => {
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700 p-3">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700 p-3 m-2">
                 {ordenesActivas.length > 0 ? (
                   ordenesActivas.map((orden) => (
                     <tr
@@ -1357,7 +1357,15 @@ const OrdenesAdmin = () => {
                         className="px-2 py-1 text-gray-600 dark:text-gray-300 truncate max-w-[150px]"
                         title={orden.servicio || "-"}
                       >
-                        {orden.servicio || "-"}
+                          <div className="flex flex-col space-y-1">
+                          {orden.servicio
+                            ? orden.servicio
+                                .split(", ")
+                                .map((servicio, index) => (
+                                  <div key={index}>{servicio.trim()}</div>
+                                ))
+                            : "Servicio no disponible"}
+                        </div>
                       </td>
                       <td className="px-2 py-1 whitespace-nowrap text-gray-600 dark:text-gray-300">
                         {formatHora(orden.hora_inicio).split(",")[1].trim()}
