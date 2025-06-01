@@ -238,7 +238,7 @@ function getCDMXISOString(date: Date): string {
           idUsuario: userId,
           idVehiculo: selectedVehicle,
           idServicios: selectedServices,
-          fechaInicio: formatFecha(fechaReserva),
+          fechaInicio: getCDMXISOString(fechaReserva),
           notas: notas || "Sin observaciones",
         }),
       });
