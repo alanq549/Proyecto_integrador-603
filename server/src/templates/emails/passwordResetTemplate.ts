@@ -71,7 +71,7 @@ export const passwordResetTemplate = (token: string) => `
 <body>
     <div class="header">
         <!-- Reemplaza con tu logo real -->
-        <img src="" alt="Estacionamiento Martinez" class="logo">
+        <img src="https://proyecto-integrador-603-1.onrender.com/log.png" alt="Estacionamiento Martinez" class="logo">
         <h1>Cambio de Contraseña</h1>
     </div>
     <div class="content">

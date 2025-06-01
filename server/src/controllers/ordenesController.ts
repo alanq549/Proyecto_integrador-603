@@ -248,11 +248,9 @@ export const crearOrdenClienteRegistrado = async (
       }
 
       if (!servicio.duracion_estimada || servicio.duracion_estimada <= 0) {
-        return res
-          .status(400)
-          .json({
-            error: `Duración inválida para servicio ${servicio.nombre}.`,
-          });
+        return res.status(400).json({
+          error: `Duración inválida para servicio ${servicio.nombre}.`,
+        });
       }
 
       duracionTotal += servicio.duracion_estimada;
@@ -383,11 +381,9 @@ export const crearOrdenDesdeCliente = async (req: Request, res: Response) => {
       }
 
       if (!servicio.duracion_estimada || servicio.duracion_estimada <= 0) {
-        return res
-          .status(400)
-          .json({
-            error: `Duración inválida para servicio ${servicio.nombre}.`,
-          });
+        return res.status(400).json({
+          error: `Duración inválida para servicio ${servicio.nombre}.`,
+        });
       }
 
       duracionTotal += servicio.duracion_estimada;
@@ -519,14 +515,12 @@ export const getHistorialOrdenes = async (req: Request, res: Response) => {
           orden.vehiculos.marca
         } ${orden.vehiculos.modelo})`,
         servicio: serviciosTexto,
-        hora_inicio: orden.fecha_inicio.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        hora_inicio: orden.fecha_inicio.toISOString(),
         estado: orden.estado,
         alertaProximaFinalizacion,
       };
     });
+    console.log("[INFO] Historial de órdenes obtenido:");
 
     res.json({ data });
   } catch (error: any) {
@@ -689,8 +683,8 @@ export const getTicketDetails = async (req: Request, res: Response) => {
           })`
         : "Vehículo desconocido",
       servicios: serviciosDetalle, // se envía el array completo
-      serviciosTexto,              // además, una string formateada
-      duracionTotal,              // útil si lo usas en frontend
+      serviciosTexto, // además, una string formateada
+      duracionTotal, // útil si lo usas en frontend
       precio: precioTotal,
       fecha: orden.fecha_inicio.toISOString(),
       estado: orden.estado || "pendiente",
@@ -708,13 +702,27 @@ export const getTicketDetails = async (req: Request, res: Response) => {
 export const obtenerOrdenesActivas = async (req: Request, res: Response) => {
   try {
     const ahora = new Date();
-    const inicioDelDia = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 0, 0, 0);
-    const finDelDia = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 23, 59, 59);
+    const inicioDelDia = new Date(
+      ahora.getFullYear(),
+      ahora.getMonth(),
+      ahora.getDate(),
+      0,
+      0,
+      0
+    );
+    const finDelDia = new Date(
+      ahora.getFullYear(),
+      ahora.getMonth(),
+      ahora.getDate(),
+      23,
+      59,
+      59
+    );
 
     const ordenesActivas = await prisma.ordenes.findMany({
       where: {
         estado: {
-          in: ["pendiente", "completado"], // Solo órdenes activas del día
+          in: ["pendiente", "completado"],
         },
         fecha_inicio: {
           gte: inicioDelDia,
@@ -722,21 +730,69 @@ export const obtenerOrdenesActivas = async (req: Request, res: Response) => {
         },
       },
       include: {
-        vehiculos: true,
-        pagos: true,
+        vehiculos: {
+          include: {
+            usuarios: true, // 👉 Para obtener el cliente
+          },
+        },
+        servicios_ordenes: {
+          include: {
+            servicios: true, // 👉 Para obtener los nombres y duración
+          },
+        },
+        pagos: true, // 👉 Para saber el estado del pago
       },
       orderBy: {
         fecha_inicio: "asc",
       },
     });
 
-    res.json(ordenesActivas);
+    // Formateo para enviar datos ya listos al frontend
+    const data = ordenesActivas.map((orden) => {
+      const serviciosTexto = orden.servicios_ordenes
+        .map(
+          (os) =>
+            `${os.servicios.nombre} - ${
+              os.servicios.duracion_estimada ?? "?"
+            }min`
+        )
+        .join("\n");
+
+      const cliente = orden.vehiculos?.usuarios
+        ? `${orden.vehiculos.usuarios.nombre} ${
+            orden.vehiculos.usuarios.apellido_materno || ""
+          }`.trim()
+        : "ocasional";
+
+      const vehiculo = orden.vehiculos
+        ? `${orden.vehiculos.placa ?? "Sin placa"} (${orden.vehiculos.marca} ${
+            orden.vehiculos.modelo
+          })`
+        : "indefinido";
+
+      return {
+        id: orden.id_orden,
+        cliente,
+        vehiculo,
+        servicio: serviciosTexto,
+        hora_inicio: orden.fecha_inicio.toISOString(), // formato crudo
+        estado: orden.estado,
+        estado_pago:
+          orden.pagos.length > 0 &&
+          orden.pagos.every((p) => p.estado === "completado")
+            ? "completado"
+            : "pendiente",
+      };
+    });
+
+    res.json({ data });
   } catch (error) {
-    console.error('[ERROR] obtenerOrdenesActivas:', error);
-    res.status(500).json({ message: 'No se pudieron obtener las órdenes activas' });
+    console.error("[ERROR] obtenerOrdenesActivas:", error);
+    res
+      .status(500)
+      .json({ message: "No se pudieron obtener las órdenes activas" });
   }
 };
-
 
 /// sistema cancela automaticamente ordenes no pagadas a tiempo
 export const cancelarOrdenesImpagas = async () => {
@@ -768,28 +824,43 @@ export const cancelarOrdenesImpagas = async () => {
     prisma.ordenes.update({
       where: { id_orden: orden.id_orden },
       data: {
-        estado: "cancelado"
+        estado: "cancelado",
       },
     })
   );
 
   await Promise.all(updates);
 
-  console.log(`⛔ Canceladas ${ordenesPendientes.length} órdenes por falta de pago`);
+  console.log(
+    `⛔ Canceladas ${ordenesPendientes.length} órdenes por falta de pago`
+  );
 };
 
-
-///administrador cancela orden manualmente 
+///administrador cancela orden manualmente
 export const cancelarOrdenManual = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    const orden = await prisma.ordenes.update({
+    const ordenExistente = await prisma.ordenes.findUnique({
+      where: { id_orden: parseInt(id) },
+    });
+
+    if (!ordenExistente) {
+      return res.status(404).json({ message: "Orden no encontrada" });
+    }
+
+    if (["completado", "cancelado"].includes(ordenExistente.estado ?? "")) {
+      return res.status(400).json({
+        message: `No se puede cancelar una orden que ya está "${ordenExistente.estado}"`,
+      });
+    }
+
+    const ordenCancelada = await prisma.ordenes.update({
       where: { id_orden: parseInt(id) },
       data: { estado: "cancelado" },
     });
 
-    res.json({ message: "Orden cancelada", orden });
+    res.json({ message: "Orden cancelada", orden: ordenCancelada });
   } catch (error) {
     console.error("[ERROR] cancelarOrdenManual:", error);
     res.status(500).json({ message: "No se pudo cancelar la orden" });
@@ -822,5 +893,3 @@ export const confirmarPagoOrden = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error al confirmar el pago de la orden" });
   }
 };
-
-

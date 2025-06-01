@@ -68,7 +68,7 @@ export const emailChangeTemplate = (token: string, newEmail: string) => `
 <body>
     <div class="header">
         <!-- Reemplaza con tu logo real -->
-        <img src="https://ejemplo.com/logo.png" alt="Estacionamiento Martinez" class="logo">
+        <img src="https://proyecto-integrador-603-1.onrender.com/log.png" alt="Estacionamiento Martinez" class="logo">
         <h1>Confirmación de Cambio de Correo</h1>
     </div>
     <div class="content">

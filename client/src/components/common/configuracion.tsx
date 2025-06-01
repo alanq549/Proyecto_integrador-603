@@ -21,8 +21,7 @@ const ConfiguracionAdmin = () => {
   const [showPassword, setShowPassword] = useState(false); //PARA LA VISIVILIDAD DEL PASSWORD
   const [loading, setLoading] = useState(false);
 
-        const API_URL = import.meta.env.VITE_API_URL;
-
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const togglePasswordVisibility = () => {
     //PARA LA VISIVILIDAD DEL PASSWORD
@@ -215,7 +214,13 @@ const ConfiguracionAdmin = () => {
   };
   return (
     <div className="min-h-screen bg-gray-50 py-0 px-4 sm:px-6 lg:px-8 dark:bg-gray-900">
-      <ToastContainer position="top-right" autoClose={1500} />
+      <ToastContainer
+        position="top-right"
+        autoClose={1500}
+        theme={darkMode ? "dark" : "light"}
+        toastClassName="rounded-md shadow-lg"
+      />
+
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-50">
@@ -387,7 +392,7 @@ const ConfiguracionAdmin = () => {
                 Configuración guardada correctamente
               </div>
             )}
-
+{/** 
             <button
               onClick={() =>
                 setSettings({
@@ -399,6 +404,7 @@ const ConfiguracionAdmin = () => {
             >
               Restablecer
             </button>
+            */}
 
             <button
               onClick={handleSave}

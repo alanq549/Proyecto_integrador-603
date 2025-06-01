@@ -4,6 +4,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 // Resumen total: órdenes, ingresos, clientes nuevos, servicio popular
+// Resumen total: órdenes, ingresos, clientes nuevos, servicio popular
 export const resumen = async (req: Request, res: Response) => {
   try {
     const range = (req.query.range as string) || "week";
@@ -15,35 +16,46 @@ export const resumen = async (req: Request, res: Response) => {
       return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // default week
     })();
 
-    // Total órdenes en rango
+    // Total órdenes en rango (solo las que no están canceladas)
     const totalOrdenes = await prisma.ordenes.count({
-      where: { fecha_inicio: { gte: fechaInicio } },
+      where: {
+        fecha_inicio: { gte: fechaInicio },
+        estado: { not: "cancelado" },
+      },
     });
 
-    // Ingresos en rango
+    // Total ingresos en rango (solo de pagos que pertenecen a órdenes no canceladas)
     const ingresosAgg = await prisma.pagos.aggregate({
       _sum: { monto: true },
-      where: { fecha_pago: { gte: fechaInicio } },
+      where: {
+        fecha_pago: { gte: fechaInicio },
+        ordenes: {
+          estado: { not: "cancelado" },
+        },
+      },
     });
-    const totalIngresos = ingresosAgg._sum.monto || 0;
 
-    // Clientes nuevos en rango (vehículos con órdenes en rango)
+    const totalIngresos = ingresosAgg._sum?.monto || 0;
+
+    // Clientes nuevos en rango (vehículos con órdenes válidas en rango)
     const clientesNuevos = await prisma.vehiculos.count({
       where: {
         ordenes: {
           some: {
             fecha_inicio: { gte: fechaInicio },
+            estado: { not: "cancelado" },
           },
         },
       },
     });
 
-    // Servicio más popular en rango (consultando ordenes_servicios con filtro en ordenes)
+    // Servicio más popular (considerando solo órdenes no canceladas)
     const popular = await prisma.ordenes_servicios.groupBy({
       by: ["id_servicio"],
       where: {
         ordenes: {
           fecha_inicio: { gte: fechaInicio },
+          estado: { not: "cancelado" },
         },
       },
       _count: {
@@ -62,18 +74,25 @@ export const resumen = async (req: Request, res: Response) => {
       const servicio = await prisma.servicios.findUnique({
         where: { id_servicio: popular[0].id_servicio },
       });
+
       servicioPopular = {
-        nombre: servicio?.nombre || "Desconocido",
+        nombre: servicio?.nombre?.trim() || "Desconocido",
         porcentaje: (popular[0]._count.id_servicio / (totalOrdenes || 1)) * 100,
       };
     }
 
-    res.json({ totalOrdenes, totalIngresos, clientesNuevos, servicioPopular });
+    res.json({
+      totalOrdenes,
+      totalIngresos,
+      clientesNuevos,
+      servicioPopular,
+    });
   } catch (error: any) {
     console.error("[ERROR] resumen:", error);
     res.status(500).json({ message: "Error al obtener resumen", error: String(error) });
   }
 };
+
 
 
 // Ingresos agrupados por día, semana o mes según parámetro
@@ -150,8 +169,6 @@ export const serviciosDistribucion = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error al obtener distribución de servicios" });
   }
 };
-
-
 
 // Tipo de clientes registrados vs ocasionales
 export const clientesTipo = async (req: Request, res: Response) => {

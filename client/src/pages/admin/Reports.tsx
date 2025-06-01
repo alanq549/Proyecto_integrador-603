@@ -25,20 +25,21 @@ const Reports = () => {
 
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
-  const fetchResumen = async () => {
-    const res = await fetch(
-      `${API_URL}/reportes/resumen?range=${timeRange}`
-    );
-    if (!res.ok) throw new Error("Error al cargar resumen");
-    return res.json();
-  };
+const fetchResumen = async () => {
+  const res = await fetch(`${API_URL}/reportes/resumen?range=${timeRange}`);
+  if (!res.ok) throw new Error("Error al cargar resumen");
+  const data = await res.json();
+  console.log("Resumen:", data);
+  return data;
+};
 
-  const fetchIngresos = async (range: "week" | "month" | "year") => {
-    const res = await fetch(
-      `${API_URL}/reportes/ingresos?range=${range}`
-    );
-    return res.json();
-  };
+const fetchIngresos = async (range: "week" | "month" | "year") => {
+  const res = await fetch(`${API_URL}/reportes/ingresos?range=${range}`);
+  const data = await res.json();
+  console.log("Ingresos:", data); // Este es el que te interesa
+  return data;
+};
+
 
   const fetchServicios = async () => {
     const res = await fetch(

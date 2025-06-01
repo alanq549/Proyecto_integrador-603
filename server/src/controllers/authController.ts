@@ -7,14 +7,13 @@ import dotenv from "dotenv";
 import {
   passwordResetTemplate,
   emailChangeTemplate,
+  accountVerificationTemplate,
 } from "../templates/emails";
 import {
   generateCode,
   sendEmail,
   getUserEmail,
 } from "../services/email.service";
-
-
 
 dotenv.config();
 
@@ -78,7 +77,8 @@ export const registerUser = async (
     await sendEmail(
       email,
       "Verifica tu correo electrónico",
-      `Por favor ingresa el siguiente código para activar tu cuenta:\n\n${token}\n\nO haz clic en este enlace:`
+      `Tu código de verificación es: ${token}`, // Texto plano por si el cliente no soporta HTML
+      accountVerificationTemplate(token)
     );
 
     return res.status(201).json({
@@ -124,8 +124,10 @@ export const registerAdmin = async (
     return res
       .status(201)
       .json({ message: "Administrador creado con éxito", user: newAdmin });
-  } catch (error:any) {
-    return res.status(500).json({ error: error.code, message: "Error al crear el administrador" });
+  } catch (error: any) {
+    return res
+      .status(500)
+      .json({ error: error.code, message: "Error al crear el administrador" });
   }
 };
 ///verificar el Email de crecion
@@ -237,12 +239,14 @@ export const requestChange = async (req: Request, res: Response) => {
   }
 
   const token = generateCode();
+  const hashedToken = await bcrypt.hash(token, 10); // Token encriptado, se guarda
+
   const expiresAt = new Date(Date.now() + 1000 * 60 * 15); // 15 mins
 
   await prisma.verificationtokens.create({
     data: {
       userId,
-      token,
+      token: hashedToken,
       type,
       newEmail: type === "email_change" ? newEmail : null,
       expiresAt,

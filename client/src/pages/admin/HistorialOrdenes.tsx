@@ -60,24 +60,32 @@ export default function HistorialOrdenes() {
       });
   }, [estadoFiltro]);
 
-  const formatHora = (hora: string | Date) => {
-    console.log("Formateando hora:", hora); // Log 9 - Formateo de hora
+const formatHora = (fechaInput: string | Date) => {
+  if (!fechaInput) return "--/--/---- --:--";
 
-    if (!hora) return "--:--";
+  try {
+    const fecha = typeof fechaInput === "string" ? new Date(fechaInput) : fechaInput;
 
-    try {
-      if (typeof hora === "string") {
-        return hora;
-      }
-      return hora.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch (error) {
-      console.error("Error formateando hora:", error, "Hora original:", hora); // Log 10 - Error de formato
-      return "--:--";
+    if (isNaN(fecha.getTime())) {
+      console.warn("Fecha inválida:", fechaInput);
+      return "--/--/---- --:--";
     }
-  };
+
+    return fecha.toLocaleString("es-MX", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "America/Mexico_City", // 🔥 Esto asegura que se muestre la hora en CDMX
+    });
+  } catch (error) {
+    console.error("Error formateando fecha/hora:", error, "Valor recibido:", fechaInput);
+    return "--/--/---- --:--";
+  }
+};
+
 
         const { darkMode } = useTheme();
 
