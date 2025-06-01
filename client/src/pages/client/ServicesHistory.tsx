@@ -11,7 +11,6 @@ type Servicio = {
   alertaProximaFinalizacion: boolean;
 };
 
-
 type ServicioTicket = {
   nombre: string;
   precio: number;
@@ -30,13 +29,14 @@ type TicketData = {
   duracionTotal?: number;
 };
 
-
 const ServicesHistory = () => {
   const API_URL = import.meta.env.VITE_API_URL;
 
   const [loading, setLoading] = useState(true);
   const [servicios, setServicios] = useState<Servicio[]>([]);
-  const [activeTab, setActiveTab] = useState<"activos" | "historicos">("activos");
+  const [activeTab, setActiveTab] = useState<"activos" | "historicos">(
+    "activos"
+  );
   const [showTicket, setShowTicket] = useState(false);
   const [ticketData, setTicketData] = useState<TicketData | null>(null);
 
@@ -55,25 +55,27 @@ const ServicesHistory = () => {
 
         const { data } = await res.json();
         // Mapeamos los datos del controlador al formato esperado por el componente
-        const serviciosAdaptados = data.map((orden: {
-          id: number;
-          cliente: string;
-          vehiculo: string;
-          servicio: string;
-          hora_inicio: string;
-          estado: string;
-          alertaProximaFinalizacion: boolean;
-        }) => ({
-          id: orden.id,
-          cliente: orden.cliente,
-          vehiculo: orden.vehiculo,
-          servicio: orden.servicio,
-          hora_inicio: orden.hora_inicio,
-          estado: orden.estado,
-          alertaProximaFinalizacion: orden.alertaProximaFinalizacion,
-          // Para mantener compatibilidad con el formato de fecha esperado
-          fecha: new Date().toISOString(), // Esto es temporal, ajusta según necesites
-        }));
+        const serviciosAdaptados = data.map(
+          (orden: {
+            id: number;
+            cliente: string;
+            vehiculo: string;
+            servicio: string;
+            hora_inicio: string; // esta es la fecha correcta
+            estado: string;
+            alertaProximaFinalizacion: boolean;
+          }) => ({
+            id: orden.id,
+            cliente: orden.cliente,
+            vehiculo: orden.vehiculo,
+            servicio: orden.servicio,
+            hora_inicio: orden.hora_inicio,
+            estado: orden.estado,
+            alertaProximaFinalizacion: orden.alertaProximaFinalizacion,
+            fecha: formatDate(orden.hora_inicio), // ✅ Usamos la función correcta
+          })
+        );
+
         setServicios(serviciosAdaptados);
       } catch (err) {
         console.error("Error al obtener historial de servicios:", err);
@@ -94,7 +96,7 @@ const ServicesHistory = () => {
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
-      timeZone: "America/Mexico_City",
+      timeZone: "America/Mexico_City", // clave 🔥
     };
     return formatted.toLocaleString("es-MX", options);
   };
@@ -106,17 +108,22 @@ const ServicesHistory = () => {
       if (!res.ok) throw new Error("Error al obtener ticket");
       const data = await res.json();
 
-     setTicketData({
-  idOrden: data.idOrden,
-  cliente: data.cliente,
-  vehiculo: data.vehiculo,
-  servicios: data.servicios,
-  serviciosTexto: data.servicios.map((s: ServicioTicket) => s.nombre).join(", "),
-  precio: data.precio,
-  fecha: formatDate(data.fecha),
-  notas: data.notas,
-  duracionTotal: data.servicios.reduce((acc: number, s: ServicioTicket) => acc + s.duracion, 0),
-});
+      setTicketData({
+        idOrden: data.idOrden,
+        cliente: data.cliente,
+        vehiculo: data.vehiculo,
+        servicios: data.servicios,
+        serviciosTexto: data.servicios
+          .map((s: ServicioTicket) => s.nombre)
+          .join(", "),
+        precio: data.precio,
+        fecha: formatDate(data.fecha),
+        notas: data.notas,
+        duracionTotal: data.servicios.reduce(
+          (acc: number, s: ServicioTicket) => acc + s.duracion,
+          0
+        ),
+      });
 
       setShowTicket(true);
     } catch (error) {
@@ -139,7 +146,10 @@ const ServicesHistory = () => {
       return "bg-green-100 text-green-800";
     else if (lowerEstado.includes("cancelado"))
       return "bg-red-100 text-red-800";
-    else if (lowerEstado.includes("pendiente") || lowerEstado.includes("en_proceso"))
+    else if (
+      lowerEstado.includes("pendiente") ||
+      lowerEstado.includes("en_proceso")
+    )
       return "bg-yellow-100 text-yellow-800";
     else return "bg-gray-100 text-gray-800";
   };
@@ -200,7 +210,9 @@ const ServicesHistory = () => {
               <div
                 key={servicio.id}
                 className={`p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow dark:bg-gray-800 dark:border-gray-700 ${
-                  servicio.alertaProximaFinalizacion ? "border-2 border-yellow-500 animate-pulse" : ""
+                  servicio.alertaProximaFinalizacion
+                    ? "border-2 border-yellow-500 animate-pulse"
+                    : ""
                 }`}
               >
                 <div className="flex justify-between items-start">
@@ -253,7 +265,8 @@ const ServicesHistory = () => {
                 ></path>
               </svg>
               <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-200">
-                No hay servicios {activeTab === "activos" ? "activos" : "en tu historial"}
+                No hay servicios{" "}
+                {activeTab === "activos" ? "activos" : "en tu historial"}
               </h3>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 {activeTab === "activos"
