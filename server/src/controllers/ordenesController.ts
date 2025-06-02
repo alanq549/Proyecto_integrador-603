@@ -608,10 +608,7 @@ export const getServiceHistory = async (req: Request, res: Response) => {
           orden.vehiculos.marca
         } ${orden.vehiculos.modelo})`,
         servicio: serviciosTexto,
-        hora_inicio: orden.fecha_inicio.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+hora_inicio: orden.fecha_inicio,
         estado: orden.estado,
         alertaProximaFinalizacion,
       };
