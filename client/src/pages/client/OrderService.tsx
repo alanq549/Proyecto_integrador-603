@@ -161,15 +161,24 @@ const OrderService = () => {
     fetchVehicles();
   }, [userId]);
 
-function getCDMXISOStringWithOffset(date: Date): string {
-  const tzoffset = -date.getTimezoneOffset(); // en minutos
-  const diff = tzoffset >= 0 ? "+" : "-";
+function getCDMXISOString(date: Date): string {
+  const tzOffset = -date.getTimezoneOffset(); // en minutos
+  const sign = tzOffset >= 0 ? "+" : "-";
   const pad = (n: number) => String(Math.floor(Math.abs(n))).padStart(2, "0");
-  const hours = pad(tzoffset / 60);
-  const minutes = pad(tzoffset % 60);
 
-  return date.toISOString().replace('Z', `${diff}${hours}:${minutes}`);
+  const offsetHours = pad(tzOffset / 60);
+  const offsetMinutes = pad(tzOffset % 60);
+
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hour = pad(date.getHours());
+  const minute = pad(date.getMinutes());
+  const second = pad(date.getSeconds());
+
+  return `${year}-${month}-${day}T${hour}:${minute}:${second}${sign}${offsetHours}:${offsetMinutes}`;
 }
+
 
   console.log("Payload enviado:", {
   idUsuario: userId,
@@ -228,7 +237,7 @@ function getCDMXISOStringWithOffset(date: Date): string {
           idUsuario: userId,
           idVehiculo: selectedVehicle,
           idServicios: selectedServices,
-          fechaInicio: getCDMXISOStringWithOffset(fechaReserva),
+          fechaInicio: getCDMXISOString(fechaReserva),
           notas: notas || "Sin observaciones",
         }),
       });
