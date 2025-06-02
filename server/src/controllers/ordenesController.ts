@@ -299,7 +299,7 @@ export const crearOrdenClienteRegistrado = async (
 
 // orden desde el lado del cliente  (vista client)
 export const crearOrdenDesdeCliente = async (req: Request, res: Response) => {
-  const { idUsuario, idVehiculo, idServicios, fechaInicio } = req.body;
+  const { idUsuario, idVehiculo, idServicios, fechaInicio, notas } = req.body;
 
   const isEmpty = (str?: string | null) => !str || str.trim().length === 0;
 
@@ -364,6 +364,7 @@ export const crearOrdenDesdeCliente = async (req: Request, res: Response) => {
         id_vehiculo: Number(idVehiculo),
         fecha_inicio: fecha,
         estado: "pendiente",
+            notas: notas || "Sin observaciones", // ✅ Ahora sí
       },
     });
 

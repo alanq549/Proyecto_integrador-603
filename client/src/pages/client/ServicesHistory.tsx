@@ -89,18 +89,18 @@ const ServicesHistory = () => {
     fetchHistorial();
   }, [API_URL]);
 
- const formatDate = (dateString: string) => {
-  const formatted = new Date(dateString);
-  return formatted.toLocaleString("es-MX", {
+const formatDate = (dateString: string) => {
+  return new Intl.DateTimeFormat("es-MX", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-    timeZone: "America/Mexico_City", // forzamos zona
-  });
+    timeZone: "America/Mexico_City", // 🔥 corregido
+  }).format(new Date(dateString));
 };
+
 
 
   const fetchTicketData = async (idOrden: number) => {
