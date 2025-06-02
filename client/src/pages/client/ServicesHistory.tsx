@@ -54,6 +54,8 @@ const ServicesHistory = () => {
         if (!res.ok) throw new Error("Error al obtener historial");
 
         const { data } = await res.json();
+        console.log("🧾 Ticket data recibido en useffect:", data);
+
         // Mapeamos los datos del controlador al formato esperado por el componente
         const serviciosAdaptados = data.map(
           (orden: {
@@ -87,19 +89,19 @@ const ServicesHistory = () => {
     fetchHistorial();
   }, [API_URL]);
 
-  const formatDate = (dateString: string) => {
-    const formatted = new Date(dateString);
-    const options: Intl.DateTimeFormatOptions = {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-      timeZone: "America/Mexico_City", // clave 🔥
-    };
-    return formatted.toLocaleString("es-MX", options);
-  };
+ const formatDate = (dateString: string) => {
+  const formatted = new Date(dateString);
+  return formatted.toLocaleString("es-MX", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "America/Mexico_City", // forzamos zona
+  });
+};
+
 
   const fetchTicketData = async (idOrden: number) => {
     try {
@@ -107,6 +109,8 @@ const ServicesHistory = () => {
       const res = await fetch(`${API_URL}/client/ticket/${idOrden}`);
       if (!res.ok) throw new Error("Error al obtener ticket");
       const data = await res.json();
+      console.log("🧾 Ticket data recibido:", data);
+
 
       setTicketData({
         idOrden: data.idOrden,
