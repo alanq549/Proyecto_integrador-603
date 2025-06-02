@@ -89,7 +89,12 @@ const ServicesHistory = () => {
     fetchHistorial();
   }, [API_URL]);
 
-const formatDate = (dateString: string) => {
+const formatDate = (dateString: string | null | undefined) => {
+  if (!dateString) return "Fecha inválida";
+
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return "Fecha inválida";
+
   return new Intl.DateTimeFormat("es-MX", {
     year: "numeric",
     month: "2-digit",
@@ -97,10 +102,9 @@ const formatDate = (dateString: string) => {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-    timeZone: "America/Mexico_City", // 🔥 corregido
-  }).format(new Date(dateString));
+    timeZone: "America/Mexico_City",
+  }).format(date);
 };
-
 
 
   const fetchTicketData = async (idOrden: number) => {
