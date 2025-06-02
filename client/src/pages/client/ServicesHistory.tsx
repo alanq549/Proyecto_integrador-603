@@ -232,7 +232,7 @@ const formatDate = (dateString: string | null | undefined) => {
                       {servicio.cliente} - {servicio.vehiculo}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Hora de inicio: {servicio.hora_inicio}
+                      Hora de inicio: {formatDate(servicio.hora_inicio)}
                     </p>
                   </div>
                   <span
