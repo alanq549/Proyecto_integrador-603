@@ -3,9 +3,11 @@ import express from "express";
 import {
   registerUser,
   registerAdmin,
+  registerEmpleado,
   loginUser,
   requestChange, verifyAndChange,
   verifyEmail
+  
 } from "../controllers/authController";
 
 const router = express.Router();
@@ -27,6 +29,10 @@ router.post("/login", (req: express.Request, res: express.Response) => {
 ///en base a las rutas de la api, se puede crear un nuevo usuario con rol administrador
 router.post("/registerA", (req: express.Request, res: express.Response) => {
   registerAdmin(req, res); // Igual que register
+});
+///en base a las rutas de la api, se puede crear un nuevo usuario con rol empleado
+router.post("/empleado", (req: express.Request, res: express.Response) => {
+  registerEmpleado(req, res); // Igual que register
 });
 
 

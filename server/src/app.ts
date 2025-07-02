@@ -11,6 +11,7 @@ import orderRoutes from './routes/ordenesRoutes';
 import clientRoutes from './routes/clientRoutes';
 import servicioRoutes from './routes/servicioRoutes';
 import reportesRoutes from './routes/reportRoutes';
+import empleadoRoutes from './routes/empleadoRoutes'
 const crearAdminPorDefecto: CrearAdminPorDefecto = require('./utils/initAdmin').crearAdminPorDefecto;
 
 const frontendURL = process.env.FRONTEND_URL || 'http://localhost:8080'; // 🔹 URL del frontend, con valor por defecto
@@ -47,6 +48,7 @@ app.use('/api', orderRoutes);
 app.use('/api', taskRoutes);
 app.use('/api', servicioRoutes);
 app.use('/api', reportesRoutes);
+app.use('/api/empleado',empleadoRoutes);
 
 // 🔹 Llamar la función justo aquí
 interface CrearAdminPorDefecto {

@@ -365,7 +365,7 @@ const Home = () => {
       <section className="cta-section">
         <h2>¿Listo para una experiencia sin complicaciones?</h2>
         <p>Reserva tu lugar y deja que nosotros nos encarguemos del resto.</p>
-        <Link to="/login" className="cta-btn">
+        <Link to="/client/order" className="cta-btn">
           Reservar ahora
         </Link>
       </section>
@@ -396,6 +396,7 @@ const Home = () => {
         </div>
       </footer>
     </div>
+
   );
 };
 export default Home;

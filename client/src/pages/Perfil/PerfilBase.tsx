@@ -94,7 +94,7 @@ const PerfilBase = ({
   // Cargar vehículos del cliente
 useEffect(() => {
   const fetchVehicles = async () => {
-    if (isAdmin) return;
+    if (rol !== "cliente") return; // <-- CAMBIO CLAVE
 
     try {
       setLoading((prev) => ({ ...prev, vehicles: true }));
@@ -110,13 +110,11 @@ useEffect(() => {
 
       setVehiculos(vehicles);
 
-      // ✅ Solo mostrar toast si hay vehículos
       if (vehicles.length > 0) {
         toast.success("Vehículos cargados correctamente");
       } else {
         toast.info("No se encontraron vehículos para este usuario");
       }
-
     } catch (error) {
       console.error("Error al obtener vehículos:", error);
       toast.error("Error al cargar vehículos");
@@ -126,7 +124,8 @@ useEffect(() => {
   };
 
   fetchVehicles();
-}, [id, isAdmin]);
+}, [id, rol]);
+
 
 
   const handleModalToggle = () => {
@@ -263,7 +262,7 @@ useEffect(() => {
               </div>
             </div>
 
-            {!isAdmin && (
+            {rol === "cliente" && (
               <div className="border-t border-gray-200 pt-6">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-3 dark:text-gray-200">
@@ -383,6 +382,21 @@ useEffect(() => {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4 ">
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-100">
+                    Correo
+                  </label>
+                  <input
+                    type="email"
+                    name="correo"
+                    value={form.correo}
+                    onChange={handleChange}
+                    readOnly
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed dark:text-gray-100 
+                     dark:border-gray-700 dark:bg-gray-500"
+                  />
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-100 ">
                     Nombre
@@ -395,21 +409,6 @@ useEffect(() => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500
                     dark:border-gray-700 dark:bg-gray-700"
                     required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-100">
-                    Correo
-                  </label>
-                  <input
-                    type="email"
-                    name="correo"
-                    value={form.correo}
-                    onChange={handleChange}
-                    readOnly
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed dark:text-gray-100 
-                     dark:border-gray-700 dark:bg-gray-700"
                   />
                 </div>
                 <div>
@@ -441,6 +440,7 @@ useEffect(() => {
                     required
                   />
                 </div>
+                
 
                 {error && <div className="text-red-600 text-sm">{error}</div>}
 

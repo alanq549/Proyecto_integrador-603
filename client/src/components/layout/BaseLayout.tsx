@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "../common/sidebar/Sidebar";
 
 type BaseLayoutProps = {
-  rol: 'admin' | 'cliente';
+  rol: 'admin' | 'cliente' | 'empleado';
   sidebarItems: { path: string; label: string; icon: React.ReactNode }[];
 };
 

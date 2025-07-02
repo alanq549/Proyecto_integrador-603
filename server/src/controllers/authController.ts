@@ -23,6 +23,9 @@ const prisma = new PrismaClient();
 interface RegisterUserRequestBody {
   email: string;
   password: string;
+  nombre?: string;
+  apellido_paterno?: string;
+  apellido_materno?: string;
 }
 // Handler para el registro de usuario con rol cliente
 export const registerUser = async (
@@ -91,7 +94,7 @@ export const registerUser = async (
   }
 };
 
-// Handler para el registro de usuario con rol administrador
+// controller para el registro de usuario con rol administrador
 export const registerAdmin = async (
   req: Request<{}, {}, RegisterUserRequestBody>,
   res: Response
@@ -130,6 +133,54 @@ export const registerAdmin = async (
       .json({ error: error.code, message: "Error al crear el administrador" });
   }
 };
+
+// controller para crear un usuario con rol empleado
+export const registerEmpleado = async (
+  req: Request<{}, {}, RegisterUserRequestBody>,
+  res: Response
+): Promise<Response> => {
+  console.log("Datos recibidos del frontend:", req.body);
+
+  const { email, password, nombre, apellido_paterno, apellido_materno } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: "Faltan campos requeridos" });
+  }
+
+  try {
+    const existingUser = await prisma.usuarios.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ error: "El email ya está en uso" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newEmpleado = await prisma.usuarios.create({
+      data: {
+        email,
+        password: hashedPassword,
+        nombre,
+        apellido_paterno,
+        apellido_materno,
+        rol: "empleado",
+      },
+    });
+
+    return res
+      .status(201)
+      .json({ message: "Empleado creado con éxito", user: newEmpleado });
+  } catch (error: any) {
+    return res
+      .status(500)
+      .json({ error: error.code, message: "Error al crear el empleado" });
+  }
+};
+
+
+
 ///verificar el Email de crecion
 export const verifyEmail = async (req: Request, res: Response) => {
   const { token } = req.body;

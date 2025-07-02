@@ -161,4 +161,5 @@ enum tareas_prioridad {
 enum usuarios_rol {
   cliente
   admin
+  empleado
 }

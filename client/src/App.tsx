@@ -22,6 +22,7 @@ import ServiciosAdmin from "./components/Services/AdminServicios";
 import PerfilAdmin from "./pages/Perfil/AdminPerfil";
 import ConfiguracionAdmin from "./components/common/configuracion";
 import ConfiguracionClient from "./components/common/configuracion";
+import Configuracionempl from "./components/common/configuracion";
 import AdminLayout from "./components/layout/AdminLayout";
 import OrdenesAdmin from "./pages/admin/OrdenesAdmin";
 import Tasks from "./pages/admin/Tasks";
@@ -29,6 +30,13 @@ import HistorialOrdenes from "./pages/admin/HistorialOrdenes";
 import Reports from "./pages/admin/Reports";
 import ProtectedRoute from "./components/ProtectedRoute"; // Asegúrate de importar el componente
 import AgregarVehiculo from "./pages/client/AgregarVehiculo";
+
+///rutas para empleados:
+import DashboardEmpleado from "./pages/employee/DashboardEmpleado";
+import OrdenesEmpleado from "./pages/employee/OrdenesEmpleado";
+import TareasEmpleado from "./pages/employee/TasksEmpleado";
+import EmployeeLayout from "./components/layout/EmployeeLayout";
+import EmpleadoPerfil from "./pages/Perfil/EmpleadoPerfil"
 
 function AppWrapper() {
   const location = useLocation();
@@ -74,7 +82,7 @@ function AppWrapper() {
   return (
     <>
       {loading && <Loader />}
-      <Routes >
+      <Routes>
         {/* Rutas públicas */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -84,7 +92,8 @@ function AppWrapper() {
         {/* Rutas del cliente con protección */}
         <Route
           path="/client"
-          element={<ProtectedRoute requiredRole="cliente">
+          element={
+            <ProtectedRoute requiredRole="cliente">
               <ClientLayout />
             </ProtectedRoute>
           }
@@ -115,10 +124,29 @@ function AppWrapper() {
           <Route path="servicios" element={<ServiciosAdmin />} />
           <Route path="perfil" element={<PerfilAdmin />} />
           <Route path="configuracion" element={<ConfiguracionAdmin />} />
-          <Route path="HistorialOrdenes" element={<HistorialOrdenes/>} />
+          <Route path="HistorialOrdenes" element={<HistorialOrdenes />} />
           <Route path="informes" element={<Reports />} />
           <Route path="informes" element={<Reports />} />
           <Route path="Order" element={<OrdenesAdmin />} />
+        </Route>
+
+        {/* Rutas del empleado con protección */}
+        <Route
+          path="/empleado"
+          element={
+            <ProtectedRoute requiredRole="empleado">
+              <EmployeeLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<DashboardEmpleado />} />
+          <Route path="dashboard" element={<DashboardEmpleado />} />
+          <Route path="ordenes" element={<OrdenesEmpleado />} />
+          <Route path="tareas" element={<TareasEmpleado />} />
+          <Route path="perfil" element={<EmpleadoPerfil />} />
+         <Route path="configuracion" element={<Configuracionempl />} />
+
+
         </Route>
       </Routes>
     </>

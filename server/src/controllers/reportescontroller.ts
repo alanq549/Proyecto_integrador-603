@@ -6,13 +6,15 @@ const prisma = new PrismaClient();
 // Resumen total: órdenes, ingresos, clientes nuevos, servicio popular
 // Resumen total: órdenes, ingresos, clientes nuevos, servicio popular
 export const resumen = async (req: Request, res: Response) => {
-  try {
+ try {
     const range = (req.query.range as string) || "week";
 
     const fechaInicio = (() => {
       const now = new Date();
-      if (range === "month") return new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-      if (range === "year") return new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+      if (range === "month")
+        return new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+      if (range === "year")
+        return new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
       return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // default week
     })();
 
@@ -49,35 +51,41 @@ export const resumen = async (req: Request, res: Response) => {
       },
     });
 
-    // Servicio más popular (considerando solo órdenes no canceladas)
-    const popular = await prisma.ordenes_servicios.groupBy({
-      by: ["id_servicio"],
+    // --- Servicio más popular sin groupBy ---
+    // 1. Traemos todas las ordenes_servicios dentro del rango y sin canceladas
+    const serviciosRelacionados = await prisma.ordenes_servicios.findMany({
       where: {
         ordenes: {
           fecha_inicio: { gte: fechaInicio },
           estado: { not: "cancelado" },
         },
       },
-      _count: {
-        id_servicio: true,
-      },
-      orderBy: {
-        _count: {
-          id_servicio: "desc",
-        },
-      },
-      take: 1,
     });
 
+    // 2. Contamos cuántas veces aparece cada id_servicio
+    const conteoPorServicio = serviciosRelacionados.reduce((acc, curr) => {
+      acc[curr.id_servicio] = (acc[curr.id_servicio] || 0) + 1;
+      return acc;
+    }, {} as Record<number, number>);
+
+    // 3. Encontrar el servicio con más apariciones
     let servicioPopular = { nombre: "Ninguno", porcentaje: 0 };
-    if (popular.length > 0) {
+
+    const idsServicios = Object.keys(conteoPorServicio).map(Number);
+    if (idsServicios.length > 0) {
+      // Busca el id con máximo conteo
+      const maxId = idsServicios.reduce((maxId, currId) =>
+        conteoPorServicio[currId] > conteoPorServicio[maxId] ? currId : maxId
+      );
+
+      // Busca el nombre del servicio
       const servicio = await prisma.servicios.findUnique({
-        where: { id_servicio: popular[0].id_servicio },
+        where: { id_servicio: maxId },
       });
 
       servicioPopular = {
         nombre: servicio?.nombre?.trim() || "Desconocido",
-        porcentaje: (popular[0]._count.id_servicio / (totalOrdenes || 1)) * 100,
+        porcentaje: (conteoPorServicio[maxId] / (totalOrdenes || 1)) * 100,
       };
     }
 
@@ -89,7 +97,9 @@ export const resumen = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error("[ERROR] resumen:", error);
-    res.status(500).json({ message: "Error al obtener resumen", error: String(error) });
+    res
+      .status(500)
+      .json({ message: "Error al obtener resumen", error: String(error) });
   }
 };
 
@@ -112,11 +122,16 @@ export const ingresos = async (req: Request, res: Response) => {
     }
 
     const pagos = await prisma.pagos.findMany({
-      where: { fecha_pago: { gte: from } },
+      where: {
+        fecha_pago: { gte: from },
+        ordenes: {
+          estado: { not: "cancelado" } // <-- Aquí la condición para excluir cancelados
+        }
+      },
       select: { fecha_pago: true, monto: true },
     });
 
-    const agrupado = pagos.reduce((acc:any, pago:any) => {
+    const agrupado = pagos.reduce((acc: any, pago: any) => {
       const fecha = new Date(pago.fecha_pago!).toLocaleDateString("es-MX", {
         weekday: range === "week" ? "short" : undefined,
         month: range === "month" || range === "year" ? "short" : undefined,
@@ -127,10 +142,13 @@ export const ingresos = async (req: Request, res: Response) => {
       return acc;
     }, {} as Record<string, number>);
 
-    const resultado = Object.entries(agrupado).map(([name, ingresos]) => ({ name, ingresos }));
+    const resultado = Object.entries(agrupado).map(([name, ingresos]) => ({
+      name,
+      ingresos,
+    }));
 
     res.json(resultado);
-  } catch (error:any) {
+  } catch (error: any) {
     console.error("[ERROR] ingresos:", error.code);
     res.status(500).json({ message: "Error al obtener ingresos" });
   }
@@ -139,30 +157,42 @@ export const ingresos = async (req: Request, res: Response) => {
 // Distribución de uso por servicio
 export const serviciosDistribucion = async (req: Request, res: Response) => {
   try {
-    // Agrupamos por id_servicio y contamos solo si la orden relacionada no está cancelada
-    const servicios = await prisma.ordenes_servicios.groupBy({
-      by: ["id_servicio"],
+    // Obtiene todas las relaciones ordenes_servicios donde la orden NO esté cancelada
+    const serviciosRelacionados = await prisma.ordenes_servicios.findMany({
       where: {
         ordenes: {
           estado: { not: "cancelado" },
         },
       },
-      _count: {
-        id_servicio: true,
+      include: {
+        servicios: true,
       },
     });
 
-    // Traemos los nombres de los servicios
+    // Cuenta cuántas veces aparece cada id_servicio
+    const conteoPorServicio = serviciosRelacionados.reduce((acc, curr) => {
+      acc[curr.id_servicio] = (acc[curr.id_servicio] || 0) + 1;
+      return acc;
+    }, {} as Record<number, number>);
+
+    // Obtén los ids de servicio que encontraste
+    const idsServicios = Object.keys(conteoPorServicio).map(Number);
+
+    // Trae los nombres de esos servicios
     const nombres = await prisma.servicios.findMany({
       where: {
-        id_servicio: { in: servicios.map((s: any) => s.id_servicio) },
+        id_servicio: { in: idsServicios },
       },
     });
 
-    // Formateamos para salida
-    const data = servicios.map((s: any) => {
-      const nombre = nombres.find((n: any) => n.id_servicio === s.id_servicio)?.nombre || "Desconocido";
-      return { name: nombre, value: s._count.id_servicio };
+    // Arma el resultado con nombre y conteo
+    const data = idsServicios.map((id) => {
+      const nombre =
+        nombres.find((n) => n.id_servicio === id)?.nombre || "Desconocido";
+      return {
+        name: nombre,
+        value: conteoPorServicio[id],
+      };
     });
 
     res.json(data);
@@ -175,7 +205,7 @@ export const serviciosDistribucion = async (req: Request, res: Response) => {
 
 // Tipo de clientes registrados vs ocasionales
 export const clientesTipo = async (req: Request, res: Response) => {
-  try {
+   try {
     // Traer solo usuarios con rol "cliente"
     const usuarios = await prisma.usuarios.findMany({
       where: {
@@ -248,10 +278,7 @@ export const getUltimasOrdenes = async (req: Request, res: Response) => {
     const data = ordenesConServicios.map((orden) => {
       const pago = orden.pagos[0];
       const serviciosNombres = orden.servicios
-        .map(
-          (s: any) =>
-            `${s.nombre} - ${s.duracion_estimada ?? "?"}min`
-        )
+        .map((s: any) => `${s.nombre} - ${s.duracion_estimada ?? "?"}min`)
         .join(", ");
 
       const clienteNombre = `${orden.vehiculos.usuarios.nombre ?? ""} ${

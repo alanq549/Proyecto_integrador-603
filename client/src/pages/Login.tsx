@@ -13,6 +13,8 @@ const Login = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false); //PARA LA VISIVILIDAD DEL PASSWORD
 
+
+
   const togglePasswordVisibility = () => {
     //PARA LA VISIVILIDAD DEL PASSWORD
     setShowPassword(!showPassword);
@@ -41,11 +43,21 @@ const Login = () => {
         toast.error(data.error || "Error al iniciar sesión");
         return;
       }
-      console.log("Usuario recibido en login:", data.user);
+        const usuario = {
+  id: data.user.id ?? data.user.id, // por si el backend da uno u otro
+  nombre: data.user.nombre,
+  apellido_paterno: data.user.apellido_paterno,
+  apellido_materno: data.user.apellido_materno,
+  email: data.user.email,
+  rol: data.user.rol,
+};
 
       // Guardar el token en localStorage
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("user", JSON.stringify(usuario));
+
+
 
       toast.success("Inicio de sesión exitoso");
 
@@ -55,6 +67,8 @@ const Login = () => {
           navigate("/client/dashboard");
         } else if (data.user.rol === "admin") {
           navigate("/admin/dashboard");
+        } else if (data.user.rol === "empleado") {
+          navigate("/empleado/dashboard");
         }
       }, 1500);
       console.log("rol  login", data.user.rol);
